@@ -1,6 +1,0 @@
-require 
-  streamlit
-  python
-  GradientBoostingClassifier
-  joblib
-  matplotlib.pyplot
