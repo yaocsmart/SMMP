@@ -3,7 +3,10 @@ import joblib
 import numpy as np
 import pandas as pd
 import shap
+import os
 import matplotlib.pyplot as plt
+new_dir='E:/CAI1229/cai0226data/SMMP'
+os.chdir(new_dir)
 model = joblib.load('GBDT.pkl')
 st.write("# Severe Mycoplasma Pneumoniae Pneumonia(SMPP) Predictor")
 feature_names = [ "COUGHday", "S100A8", "S100A8A9", "S100A9", "ALP",  "LDH_L"]
