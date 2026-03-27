@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import shap
 import matplotlib.pyplot as plt
-model = joblib.load('E:/CAI1229/cai0226data/SMMP/GBDT.pkl')
+GBDT= 'E:/CAI1229/cai0226data/SMMP/GBDT.pkl'
+model = joblib.load(GBDT)
 st.write("# Severe Mycoplasma Pneumoniae Pneumonia(SMPP) Predictor")
-model = joblib.load('GBDT.pkl')
 feature_names = [ "COUGHday", "S100A8", "S100A8A9", "S100A9", "ALP",  "LDH_L"]
 COUGHday = st.number_input("Enter the duration of cough (day) ",min_value=1, max_value=120, value=10)
 S100A8 = st.number_input("Enter your S100A8 protein value (pg/mL) ",min_value=5, max_value=3500, value=300)
