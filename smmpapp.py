@@ -4,8 +4,7 @@ import numpy as np
 import pandas as pd
 import shap
 import matplotlib.pyplot as plt
-GBDT= 'E:/CAI1229/cai0226data/SMMP/GBDT.pkl'
-model = joblib.load('GBDT')
+model = joblib.load('/E:/CAI1229/cai0226data/SMMP/GBDT.pkl')
 st.write("# Severe Mycoplasma Pneumoniae Pneumonia(SMPP) Predictor")
 feature_names = [ "COUGHday", "S100A8", "S100A8A9", "S100A9", "ALP",  "LDH_L"]
 COUGHday = st.number_input("Enter the duration of cough (day) ",min_value=1, max_value=120, value=10)
