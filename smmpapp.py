@@ -5,7 +5,7 @@ import pandas as pd
 import shap
 import os
 import matplotlib.pyplot as plt
-new_dir='E:/CAI1229/cai0226data/SMMP'
+new_dir="E:\\CAI1229\\cai0226data\\SMMP"
 os.chdir(new_dir)
 model = joblib.load('GBDT.pkl')
 st.write("# Severe Mycoplasma Pneumoniae Pneumonia(SMPP) Predictor")
