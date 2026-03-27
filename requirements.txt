@@ -1,0 +1,6 @@
+pandas==2.3.0??
+streamlit==1.45.1??
+openpyxl==3.1.5??
+xlsxwriter==3.2.5
+joblit>=1.2.0
+matplotlib==3.5.3
