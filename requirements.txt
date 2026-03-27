@@ -2,4 +2,4 @@ streamlit==1.23.1
 joblib
 matplotlib
 shap
-pillow==9.5.0
+Pillow==9.5.0
