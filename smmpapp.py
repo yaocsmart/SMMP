@@ -3,7 +3,12 @@ import joblib
 import numpy as np
 import pandas as pd
 import shap
+import os
+from pathlib import Path
 import matplotlib.pyplot as plt
+current_dir = Path(__file__).parent.resolve()
+model_path = current_dir / "models" / "GBDT.pkl"
+os.makedirs(model_path.parent, exist_ok=True)
 model=joblib.load(filename='G:/SMMP/GBDT.pkl')
 st.write("# Severe Mycoplasma Pneumoniae Pneumonia(SMPP) Predictor")
 feature_names = [ "COUGHday", "S100A8", "S100A8A9", "S100A9", "ALP",  "LDH_L"]
