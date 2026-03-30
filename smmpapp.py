@@ -6,6 +6,7 @@ import shap
 import os
 import matplotlib.pyplot as plt
 new_dir = "G:\SMMP"
+os.path.exists(new_dir)
 os.chdir(new_dir)
 new_dir = os.chdir('G:\SMMP')
 model = joblib.load('GBDT.pkl')
