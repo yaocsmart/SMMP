@@ -3,8 +3,9 @@ import joblib
 import numpy as np
 import pandas as pd
 import shap
+import pickle
 import matplotlib.pyplot as plt
-model=joblib.load(filename='C:/Users/admin/AppData/Local/Programs/Python/Python37/GBDT.pkl')
+model=pickle.load(file=open('C:/Users/admin/AppData/Local/Programs/Python/Python37/GBDT.pkl','rb'))
 st.write("# Severe Mycoplasma Pneumoniae Pneumonia(SMPP) Predictor")
 feature_names = [ "COUGHday", "S100A8", "S100A8A9", "S100A9", "ALP",  "LDH_L"]
 COUGHday = st.number_input("Enter the duration of cough (day) ",min_value=1, max_value=120, value=10)
