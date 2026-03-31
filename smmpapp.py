@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import shap
 import os
+os.environ['MPL_NUM_THREADS'] = '1' 
 from pathlib import Path
 import matplotlib.pyplot as plt
 current_dir = Path(__file__).parent.resolve()
@@ -43,6 +44,7 @@ if st.button("Predict"):
    plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
 
    st.image("shap_force_plot.png")
+
 
 
 
