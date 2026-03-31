@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 current_dir = Path(__file__).parent.resolve()
 model_path = current_dir / "models" / "GBDT.pkl"
 os.makedirs(model_path.parent, exist_ok=True)
-model=joblib.load(filename='G:/SMMP/GBDT.pkl')
+model=joblib.load('GBDT.pkl')
 st.write("# Severe Mycoplasma Pneumoniae Pneumonia(SMPP) Predictor")
 feature_names = [ "COUGHday", "S100A8", "S100A8A9", "S100A9", "ALP",  "LDH_L"]
 COUGHday = st.number_input("Enter the duration of cough (day) ",min_value=1, max_value=120, value=10)
@@ -43,5 +43,6 @@ if st.button("Predict"):
    plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
 
    st.image("shap_force_plot.png")
+
 
 
