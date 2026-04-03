@@ -1,12 +1,8 @@
-# Streamlit 核心
-streamlit>=1.38.0,<2.0.0
-
-# 数据科学兼容包（无冲突稳定版）
-numpy>=1.26.0,<2.0.0
-pandas>=2.1.0,<3.0.0
-scikit-learn>=1.4.0,<2.0.0
-matplotlib>=3.8.0,<4.0.0
-pillow>=10.0.0,<11.0.0
-
-# 通用依赖
-python-dotenv>=1.0.0
+streamlit>=1.32.0
+scikit-learn==1.7.0
+scikit-learn==1.2.2
+numpy>=1.24.0
+pandas>=2.0.0
+shap>=0.45.0
+matplotlib>=3.8.0
+joblib>=1.3.0
