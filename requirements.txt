@@ -1,7 +1,12 @@
-streamlit==1.32.0
-scikit-learn==1.0.2
-numpy==1.21.6
-pandas==1.5.3
-shap==0.40.0
-matplotlib==3.7.1
-joblib==1.1.1
+# 适配Python 3.14的稳定版本组合（无distutils依赖）
+streamlit==1.38.0
+# 关键：用新版sklearn，无需distutils编译
+scikit-learn==1.5.1
+numpy==2.0.0
+pandas==2.2.2
+shap==0.46.0
+matplotlib==3.9.2
+joblib==1.4.2
+scipy==1.14.0
+# 补充：解决Python 3.14的distutils缺失问题
+setuptools<70.0.0
