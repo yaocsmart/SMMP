@@ -20,7 +20,7 @@ try:
     # 直接用joblib加载（你的模型是sklearn原生，无需自定义Unpickler）
     # model = joblib.load(model_path)
     with open("GBDT.pkl", 'rb') as f:
-    model = pickle.load(f)
+         model = pickle.load(f)
     st.success(f"✅ 模型加载成功！路径：{model_path}")
 except Exception as e:
     st.error(f"❌ 模型加载失败！错误信息：{str(e)}")
