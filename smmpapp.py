@@ -7,20 +7,30 @@ import os
 from pathlib import Path
 import matplotlib.pyplot as plt
 import pickle
-from sklearn.ensemble import GradientBoostingClassifier
+import sys
 
-# ====================== 1. 模型加载（完全适配你的GitHub结构） ======================
-# 直接定位根目录的GBDT.pkl，不做多余路径判断
+# ====================== 修复：兼容旧版本 sklearn 模型 ======================
+# 解决 No module named 'sklearn.ensemble._gb_losses'
+class FixedUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        # 重定向旧的损失函数路径
+        if module == "sklearn.ensemble._gb_losses":
+            module = "sklearn._losses"
+        if module == "sklearn.ensemble.gradient_boosting":
+            from sklearn.ensemble import gradient_boosting
+            return getattr(gradient_boosting, name)
+        return super().find_class(module, name)
+
+# ====================== 1. 模型加载（修复版） ======================
 current_dir = Path(__file__).parent.resolve()
 model_path = current_dir / "GBDT.pkl"
 
-# 强制加载模型，增加详细错误提示
 model = None
 try:
-    # 直接用joblib加载（你的模型是sklearn原生，无需自定义Unpickler）
-    # model = joblib.load(model_path)
-    with open("GBDT.pkl", 'rb') as f:
-         model = pickle.load(f)
+    # 使用兼容加载器
+    with open(model_path, 'rb') as f:
+        unpickler = FixedUnpickler(f)
+        model = unpickler.load()
     st.success(f"✅ 模型加载成功！路径：{model_path}")
 except Exception as e:
     st.error(f"❌ 模型加载失败！错误信息：{str(e)}")
@@ -46,13 +56,12 @@ ALP = st.number_input("Enter your Alkaline Phosphatase (ALP) level (U/L)",
 LDH_L = st.number_input("Enter your Lactate Dehydrogenase (LDH) level (U/L)", 
                        min_value=10.0, max_value=3000.0, value=20.0)
 
-# 构造输入特征（严格二维数组，sklearn要求）
+# 构造输入特征
 feature_values = [COUGHday, S100A8, S100A8A9, S100A9, ALP, LDH_L]
 features = np.array([feature_values], dtype=np.float64)
 
-# ====================== 3. 预测逻辑（增加模型有效性校验） ======================
+# ====================== 3. 预测逻辑 ======================
 if st.button("Predict"):
-    # 先校验模型是否有效
     if model is None:
         st.error("❌ 无法预测：模型加载失败，请检查GBDT.pkl文件")
     elif not hasattr(model, "predict"):
@@ -74,22 +83,19 @@ if st.button("Predict"):
 
             st.write(f"完整概率（轻症/重症）：{np.round(predicted_proba, 4)}")
 
-            # ====================== 4. SHAP可视化（兼容所有版本） ======================
+            # ====================== 4. SHAP可视化 ======================
             try:
                 explainer = shap.TreeExplainer(model)
                 df_input = pd.DataFrame([feature_values], columns=feature_names)
                 shap_values = explainer.shap_values(df_input)
 
-                # 兼容不同版本SHAP输出
                 if isinstance(shap_values, list):
-                    # 二分类模型：shap_values[0]是负类，shap_values[1]是正类（重症=1）
                     shap_val = shap_values[1][0]
                     base_val = explainer.expected_value[1]
                 else:
                     shap_val = shap_values[0]
                     base_val = explainer.expected_value
 
-                # 生成SHAP力图
                 shap.force_plot(
                     base_val,
                     shap_val,
