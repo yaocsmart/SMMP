@@ -7,60 +7,27 @@ import os
 from pathlib import Path
 import matplotlib.pyplot as plt
 import pickle
-from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
+from sklearn.ensemble import GradientBoostingClassifier
 
-# ====================== 核心修复：确保模型正确加载并验证 ======================
-class SafeUnpickler(pickle.Unpickler):
-    def find_class(self, module, name):
-        # 兼容所有GBDT相关类
-        gbdt_classes = {
-            'GradientBoostingClassifier': GradientBoostingClassifier,
-            'GradientBoostingRegressor': GradientBoostingRegressor
-        }
-        try:
-            return super().find_class(module, name)
-        except (ModuleNotFoundError, AttributeError):
-            # 如果找不到，返回原生GBDT类
-            return gbdt_classes.get(name, GradientBoostingClassifier)
-
-# 初始化模型变量
-model = None
+# ====================== 1. 模型加载（完全适配你的GitHub结构） ======================
+# 直接定位根目录的GBDT.pkl，不做多余路径判断
 current_dir = Path(__file__).parent.resolve()
+model_path = current_dir / "GBDT.pkl"
 
-# 尝试加载模型并验证
+# 强制加载模型，增加详细错误提示
+model = None
 try:
-    # 尝试1：models文件夹下的模型
-    model_path = current_dir / "models" / "GBDT.pkl"
-    with open(model_path, 'rb') as f:
-        model = SafeUnpickler(f).load()
-    st.success(f"✅ Model loaded from: {model_path}")
-except Exception as e1:
-    try:
-        # 尝试2：根目录下的模型
-        model_path = current_dir / "GBDT.pkl"
-        with open(model_path, 'rb') as f:
-            model = SafeUnpickler(f).load()
-        st.success(f"✅ Model loaded from: {model_path}")
-    except Exception as e2:
-        st.error(f"❌ Failed to load model: {str(e2)}")
-        st.warning("Please check if GBDT.pkl exists in root directory or models/ folder!")
+    # 直接用joblib加载（你的模型是sklearn原生，无需自定义Unpickler）
+    model = joblib.load(model_path)
+    st.success(f"✅ 模型加载成功！路径：{model_path}")
+except Exception as e:
+    st.error(f"❌ 模型加载失败！错误信息：{str(e)}")
+    st.warning("请检查GBDT.pkl文件是否完整，或重新生成模型文件")
 
-# 验证模型是否有效
-if model is not None:
-    # 检查模型是否有predict方法
-    if not hasattr(model, 'predict'):
-        st.error("❌ Loaded model is invalid (no predict method)!")
-        # 备用方案：创建一个空的GBDT模型（避免崩溃）
-        model = GradientBoostingClassifier()
-        st.warning("⚠️ Using fallback GBDT model (not trained)!")
-else:
-    # 模型加载失败时，创建空模型避免崩溃
-    model = GradientBoostingClassifier()
-    st.warning("⚠️ Using fallback GBDT model (not trained)!")
-
-# ====================== 页面UI ======================
+# ====================== 2. 页面UI ======================
 st.write("# Severe Mycoplasma Pneumoniae Pneumonia(SMPP) Predictor")
 
+# 特征顺序必须和训练模型时完全一致！
 feature_names = ["COUGHday", "S100A8", "S100A8A9", "S100A9", "ALP", "LDH_L"]
 
 # 输入控件
@@ -77,58 +44,64 @@ ALP = st.number_input("Enter your Alkaline Phosphatase (ALP) level (U/L)",
 LDH_L = st.number_input("Enter your Lactate Dehydrogenase (LDH) level (U/L)", 
                        min_value=10.0, max_value=3000.0, value=20.0)
 
+# 构造输入特征（严格二维数组，sklearn要求）
 feature_values = [COUGHday, S100A8, S100A8A9, S100A9, ALP, LDH_L]
-# 确保输入格式正确（二维数组）
 features = np.array([feature_values], dtype=np.float64)
 
-# ====================== 预测逻辑（增加完整异常捕获） ======================
+# ====================== 3. 预测逻辑（增加模型有效性校验） ======================
 if st.button("Predict"):
-    try:
-        # 核心预测（增加异常捕获）
-        Predicted_Degree = model.predict(features)[0]
-        predicted_proba = model.predict_proba(features)[0]
-        probability = predicted_proba[Predicted_Degree] * 100
-
-        # 显示结果
-        if Predicted_Degree == 1:
-            st.success(f"✅ Prediction Result: Severe")
-            st.write(f"**Probability of Severe SMMP:** {probability:.1f}%")
-        else:
-            st.success(f"✅ Prediction Result: Mild")
-            st.write(f"**Probability of Mild SMMP:** {probability:.1f}%")
-
-        st.write(f"Full Probabilities (Mild/Severe): {predicted_proba.round(4)}")
-
-        # SHAP可视化（增加更强的异常处理）
+    # 先校验模型是否有效
+    if model is None:
+        st.error("❌ 无法预测：模型加载失败，请检查GBDT.pkl文件")
+    elif not hasattr(model, "predict"):
+        st.error("❌ 模型无效：加载的对象不是可预测的sklearn模型")
+    else:
         try:
-            explainer = shap.TreeExplainer(model)
-            df = pd.DataFrame([feature_values], columns=feature_names)
-            shap_values = explainer.shap_values(df)
+            # 核心预测
+            Predicted_Degree = model.predict(features)[0]
+            predicted_proba = model.predict_proba(features)[0]
+            probability = predicted_proba[Predicted_Degree] * 100
 
-            # 兼容不同版本的SHAP输出格式
-            if isinstance(shap_values, list):
-                shap_val = shap_values[1][0]  # 取重症类的SHAP值
-                base_val = explainer.expected_value[1]
+            # 显示结果
+            if Predicted_Degree == 1:
+                st.success(f"✅ 预测结果：重症 (Severe)")
+                st.write(f"**重症概率：{probability:.1f}%**")
             else:
-                shap_val = shap_values[0]
-                base_val = explainer.expected_value
+                st.success(f"✅ 预测结果：轻症 (Mild)")
+                st.write(f"**轻症概率：{probability:.1f}%**")
 
-            # 生成SHAP图
-            shap.force_plot(
-                base_val,
-                shap_val,
-                df,
-                matplotlib=True,
-                show=False  # 避免自动弹出窗口
-            )
-            plt.tight_layout()
-            plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=300)
-            plt.close()
-            st.image("shap_force_plot.png", caption="SHAP Explanation Plot")
-        except Exception as shap_err:
-            st.warning(f"⚠️ SHAP plot generation failed: {str(shap_err)[:100]}")
+            st.write(f"完整概率（轻症/重症）：{np.round(predicted_proba, 4)}")
 
-    except Exception as pred_err:
-        st.error(f"❌ Prediction failed: {str(pred_err)}")
-        # 显示详细错误信息（帮助排查）
-        st.info(f"Debug info: model type = {type(model)}, features shape = {features.shape}")
+            # ====================== 4. SHAP可视化（兼容所有版本） ======================
+            try:
+                explainer = shap.TreeExplainer(model)
+                df_input = pd.DataFrame([feature_values], columns=feature_names)
+                shap_values = explainer.shap_values(df_input)
+
+                # 兼容不同版本SHAP输出
+                if isinstance(shap_values, list):
+                    # 二分类模型：shap_values[0]是负类，shap_values[1]是正类（重症=1）
+                    shap_val = shap_values[1][0]
+                    base_val = explainer.expected_value[1]
+                else:
+                    shap_val = shap_values[0]
+                    base_val = explainer.expected_value
+
+                # 生成SHAP力图
+                shap.force_plot(
+                    base_val,
+                    shap_val,
+                    df_input,
+                    matplotlib=True,
+                    show=False
+                )
+                plt.tight_layout()
+                plt.savefig("shap_force_plot.png", bbox_inches="tight", dpi=300)
+                plt.close()
+                st.image("shap_force_plot.png", caption="SHAP特征贡献解释图")
+            except Exception as shap_err:
+                st.warning(f"⚠️ SHAP图生成失败：{str(shap_err)[:100]}")
+
+        except Exception as pred_err:
+            st.error(f"❌ 预测失败：{str(pred_err)}")
+            st.info(f"调试信息：模型类型={type(model)}, 输入形状={features.shape}")
